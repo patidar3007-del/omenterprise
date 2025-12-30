@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>OM Enterprise Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css"/>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial;}
+body{
+  min-height:100vh;
+  background:linear-gradient(rgba(0,0,0,.65),rgba(0,0,0,.65)),
+  url("image/background.png") center/cover no-repeat;
+  color:#fff;
+}
+
+/* ===== TOP BAR ===== */
+.topbar{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:15px 40px;
+  background:rgba(255,255,255,0.12);
+  backdrop-filter:blur(14px);
+  border-bottom:1px solid rgba(255,255,255,0.25);
+}
+
+.logo{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.logo img{width:45px;}
+.logo h2{font-size:22px;}
+
+/* ===== FUNCTION BAR ===== */
+.nav{
+  display:flex;
+  gap:25px;
+}
+.nav a{
+  color:#fff;
+  text-decoration:none;
+  font-size:15px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  position:relative;
+  padding-bottom:5px;
+}
+.nav a::after{
+  content:"";
+  position:absolute;
+  bottom:0;
+  left:0;
+  width:0%;
+  height:2px;
+  background:#3498db;
+  transition:.3s;
+}
+.nav a:hover::after{width:100%;}
+
+/* ===== LOGOUT ===== */
+.logout{
+  background:linear-gradient(135deg,#e74c3c,#c0392b);
+  padding:10px 18px;
+  border-radius:8px;
+  border:none;
+  color:#fff;
+  cursor:pointer;
+}
+
+/* ===== MAIN ===== */
+.main{
+  padding:60px 40px;
+  animation:fadeIn 1s ease;
+}
+.main h1{font-size:38px;margin-bottom:10px;}
+.main p{opacity:.9;margin-bottom:35px;}
+
+.about{
+  background:rgba(255,255,255,0.12);
+  padding:30px;
+  border-radius:18px;
+  margin-bottom:50px;
+}
+
+/* ===== SWIPER ===== */
+.swiper{
+  max-width:1000px;
+  height:420px;
+  border-radius:18px;
+}
+.swiper-slide img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+
+/* ===== ANIMATION ===== */
+@keyframes fadeIn{
+  from{opacity:0;transform:translateY(20px);}
+  to{opacity:1;transform:translateY(0);}
+}
+
+/* ===== MOBILE ===== */
+@media(max-width:768px){
+  .topbar{flex-direction:column;gap:15px;}
+  .nav{flex-wrap:wrap;justify-content:center;}
+  .main{padding:30px;}
+}
+</style>
+</head>
+
+<body>
+
+<script>
+if(localStorage.getItem("loggedIn")!=="true"){
+  window.location.href="login.html";
+}
+</script>
+
+<!-- ===== TOP BAR ===== -->
+<div class="topbar">
+  <div class="logo">
+    <img src="image/logo.png">
+    <h2>OM Enterprise</h2>
+  </div>
+
+  <div class="nav">
+    <a href="attendance.html"><i class="fa fa-user-check"></i>Attendance</a>
+    <a href="employee.html?id=101"><i class="fa fa-users"></i>Employees</a>
+    <a href="report.html"><i class="fa fa-chart-bar"></i>Report</a>
+  </div>
+
+  <button class="logout" onclick="logout()">
+    <i class="fa fa-sign-out-alt"></i> Logout
+  </button>
+</div>
+
+<!-- ===== MAIN CONTENT ===== -->
+<div class="main">
+  <h1>Welcome to OM Enterprise</h1>
+  <p>Worker Attendance Management System</p>
+
+  <div class="about">
+    <h2>About Company</h2>
+    <p>
+      OM Enterprise manages workforce operations efficiently, ensuring
+      transparency, productivity, and employee satisfaction.
+    </p>
+  </div>
+
+  <h2>Company Gallery</h2>
+  <div class="swiper">
+    <div class="swiper-wrapper">
+      <div class="swiper-slide"><img src="image/photo1.jpg"></div>
+      <div class="swiper-slide"><img src="image/photo2.jpg"></div>
+      <div class="swiper-slide"><img src="image/photo3.jpg"></div>
+      <div class="swiper-slide"><img src="image/photo4.jpg"></div>
+    </div>
+    <div class="swiper-pagination"></div>
+    <div class="swiper-button-next"></div>
+    <div class="swiper-button-prev"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
+<script>
+function logout(){
+  localStorage.removeItem("loggedIn");
+  window.location.href="login.html";
+}
+
+new Swiper('.swiper',{
+  loop:true,
+  autoplay:{delay:3000},
+  pagination:{el:'.swiper-pagination',clickable:true},
+  navigation:{
+    nextEl:'.swiper-button-next',
+    prevEl:'.swiper-button-prev'
+  }
+});
+</script>
+
+</body>
+</html>
+
+

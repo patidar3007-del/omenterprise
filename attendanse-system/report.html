@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Attendance Report | OM Enterprise</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Excel & PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+
+<style>
+body{
+  font-family: Arial, sans-serif;
+  background:#f4f6f8;
+  padding:20px;
+}
+h2{
+  text-align:center;
+  color:#1e88e5;
+  margin:20px 0;
+}
+.controls{
+  display:flex;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-bottom:15px;
+}
+select,button{
+  padding:10px;
+  font-size:14px;
+}
+button{
+  border:none;
+  border-radius:6px;
+  background:#1e88e5;
+  color:#fff;
+  cursor:pointer;
+}
+table{
+  width:100%;
+  background:#fff;
+  border-collapse:collapse;
+  box-shadow:0 4px 12px rgba(0,0,0,0.15);
+  margin-bottom:30px;
+}
+th,td{
+  padding:12px;
+  border:1px solid #ddd;
+  text-align:center;
+}
+th{
+  background:#1e88e5;
+  color:#fff;
+}
+</style>
+</head>
+
+<body>
+
+<h2>Attendance Report</h2>
+
+<div class="controls">
+  <select id="employeeFilter">
+    <option value="">All Employees</option>
+  </select>
+
+  <select id="monthFilter">
+    <option value="">All Months</option>
+  </select>
+
+  <div>
+    <button onclick="exportExcel()">Export Excel</button>
+    <button onclick="exportPDF()">Export PDF</button>
+  </div>
+</div>
+
+<table id="attendanceTable">
+<thead>
+<tr>
+  <th>Date</th>
+  <th>ID</th>
+  <th>Name</th>
+  <th>IN</th>
+  <th>OUT</th>
+  <th>Working Hours</th>
+  <th>Overtime (hrs)</th>
+  <th>Salary (₹)</th>
+</tr>
+</thead>
+<tbody id="reportBody"></tbody>
+</table>
+
+<h2>Monthly Salary Summary</h2>
+
+<table id="summaryTable">
+<thead>
+<tr>
+  <th>Employee ID</th>
+  <th>Name</th>
+  <th>Total Hours</th>
+  <th>Total Overtime</th>
+  <th>Total Salary (₹)</th>
+</tr>
+</thead>
+<tbody id="summaryBody"></tbody>
+</table>
+
+<script>
+// ================= CONFIG =================
+const NORMAL_HOURS = 8;
+const HOURLY_RATE = 100;
+const OVERTIME_RATE = 150;
+
+// ================= DATA =================
+const attendance = JSON.parse(localStorage.getItem("attendance")) || [];
+const tbody = document.getElementById("reportBody");
+const summaryBody = document.getElementById("summaryBody");
+const empFilter = document.getElementById("employeeFilter");
+const monthFilter = document.getElementById("monthFilter");
+
+// ================= FUNCTIONS =================
+function calculateOvertime(workHours){
+  const h = parseFloat(workHours) || 0;
+  return h > NORMAL_HOURS ? (h - NORMAL_HOURS).toFixed(2) : "0.00";
+}
+
+function calculateSalary(workHours){
+  const h = parseFloat(workHours) || 0;
+  const normalPay = Math.min(h, NORMAL_HOURS) * HOURLY_RATE;
+  const overtimePay = Math.max(h - NORMAL_HOURS, 0) * OVERTIME_RATE;
+  return (normalPay + overtimePay).toFixed(2);
+}
+
+// ================= FILTERS =================
+const empSet = new Set();
+const monthSet = new Set();
+
+attendance.forEach(r=>{
+  if(!r.date) return;
+  empSet.add(`${r.id}|${r.name}`);
+  monthSet.add(r.date.slice(3)); // MM-YYYY
+});
+
+empSet.forEach(e=>{
+  const [id,name] = e.split("|");
+  empFilter.innerHTML += `<option value="${id}">${name}</option>`;
+});
+
+monthSet.forEach(m=>{
+  monthFilter.innerHTML += `<option value="${m}">${m}</option>`;
+});
+
+// ================= RENDER TABLE =================
+function renderTable(){
+  tbody.innerHTML = "";
+  summaryBody.innerHTML = "";
+
+  const empVal = empFilter.value;
+  const monthVal = monthFilter.value;
+
+  const summary = {};
+
+  attendance.forEach(r=>{
+    if(empVal && r.id !== empVal) return;
+    if(monthVal && !r.date.endsWith(monthVal)) return;
+
+    const hours = parseFloat(r.workHours) || 0;
+    const overtime = parseFloat(calculateOvertime(hours));
+    const salary = parseFloat(calculateSalary(hours));
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${r.date}</td>
+      <td>${r.id}</td>
+      <td>${r.name}</td>
+      <td>${r.inTime}</td>
+      <td>${r.outTime}</td>
+      <td>${hours.toFixed(2)}</td>
+      <td>${overtime.toFixed(2)}</td>
+      <td>₹${salary.toFixed(2)}</td>
+    `;
+    tbody.appendChild(tr);
+
+    if(!summary[r.id]){
+      summary[r.id] = { id:r.id, name:r.name, hours:0, overtime:0, salary:0 };
+    }
+
+    summary[r.id].hours += hours;
+    summary[r.id].overtime += overtime;
+    summary[r.id].salary += salary;
+  });
+
+  Object.values(summary).forEach(s=>{
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${s.id}</td>
+      <td>${s.name}</td>
+      <td>${s.hours.toFixed(2)}</td>
+      <td>${s.overtime.toFixed(2)}</td>
+      <td>₹${s.salary.toFixed(2)}</td>
+    `;
+    summaryBody.appendChild(tr);
+  });
+}
+
+// ================= EVENTS =================
+empFilter.addEventListener("change", renderTable);
+monthFilter.addEventListener("change", renderTable);
+
+// ================= EXPORT =================
+function exportExcel(){
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.table_to_sheet(attendanceTable), "Attendance");
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.table_to_sheet(summaryTable), "Salary Summary");
+  XLSX.writeFile(wb, "attendance_salary_report.xlsx");
+}
+
+function exportPDF(){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.text("Attendance Report - OM Enterprise", 14, 10);
+  doc.autoTable({ html:"#attendanceTable", startY:15 });
+  doc.addPage();
+  doc.text("Monthly Salary Summary", 14, 10);
+  doc.autoTable({ html:"#summaryTable", startY:15 });
+  doc.save("attendance_salary_report.pdf");
+}
+
+// ================= INIT =================
+renderTable();
+</script>
+
+</body>
+</html>

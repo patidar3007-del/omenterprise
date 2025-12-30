@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>All Employees | OM Enterprise</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+body {
+  font-family: 'Roboto', sans-serif;
+  background: #f4f6f8;
+  padding: 20px;
+}
+
+h1 {
+  text-align: center;
+  color: #1e88e5;
+  margin-bottom: 20px;
+}
+
+.search-sort {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+}
+
+.search-sort input, .search-sort select {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+.employee-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+}
+
+.card {
+  background: #fff;
+  width: 250px;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+  text-align: center;
+  transition: transform 0.3s;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+}
+
+.card img {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 15px;
+  border: 3px solid #1e88e5;
+}
+
+.card h3 {
+  color: #1e88e5;
+  margin-bottom: 10px;
+}
+
+.card p {
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+</style>
+</head>
+<body>
+
+<h1>All Employees</h1>
+
+<div class="search-sort">
+  <input type="text" id="searchInput" placeholder="Search by ID, Name, Department..." onkeyup="filterEmployees()">
+  <select id="sortSelect" onchange="sortEmployees()">
+    <option value="">Sort By</option>
+    <option value="id">Employee ID</option>
+    <option value="name">Name</option>
+    <option value="dept">Department</option>
+  </select>
+</div>
+
+<div class="employee-container" id="employeeContainer">
+  <!-- Employee cards will appear here -->
+</div>
+
+<script>
+// Employee data
+const employees = [
+  {id:101, name:"Ishwarbhai Patel", dept:"Production", email:"ishwarbhai@omenterprise.com", phone:"123456789"},
+  {id:102, name:"Hetvi", dept:"Sales", email:"hetvi@omenterprise.com", phone:"987654321"},
+  {id:103, name:"Suresh Patel", dept:"HR", email:"sureshpatel@omenterprise.com", phone:"456789123"},
+  {id:104, name:"Dharvik Patel", dept:"Finance", email:"dharvikpatel@omenterprise.com", phone:"789123456"},
+  {id:105, name:"Hetviben Patel", dept:"Marketing", email:"hetvibenpatel@omenterprise.com", phone:"321654987"}
+];
+
+const placeholder = "image/default.png";
+let displayedEmployees = [...employees];
+
+// Render employee cards
+function renderEmployees(data = displayedEmployees) {
+  const container = document.getElementById("employeeContainer");
+  container.innerHTML = "";
+
+  data.forEach(emp => {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <img src="${placeholder}" alt="Profile">
+      <h3>${emp.name}</h3>
+      <p><b>ID:</b> ${emp.id}</p>
+      <p><b>Department:</b> ${emp.dept}</p>
+      <p><b>Email:</b> ${emp.email}</p>
+      <p><b>Phone:</b> ${emp.phone}</p>
+    `;
+    container.appendChild(card);
+  });
+}
+
+// Filter employees
+function filterEmployees() {
+  const query = document.getElementById("searchInput").value.toLowerCase();
+  displayedEmployees = employees.filter(emp => 
+    emp.id.toString().includes(query) ||
+    emp.name.toLowerCase().includes(query) ||
+    emp.dept.toLowerCase().includes(query)
+  );
+  renderEmployees(displayedEmployees);
+}
+
+// Sort employees
+function sortEmployees() {
+  const key = document.getElementById("sortSelect").value;
+  if(key){
+    displayedEmployees.sort((a,b)=>{
+      if(typeof a[key] === "string") return a[key].localeCompare(b[key]);
+      else return a[key]-b[key];
+    });
+  }
+  renderEmployees(displayedEmployees);
+}
+
+// Initial render
+renderEmployees();
+</script>
+
+</body>
+</html>
