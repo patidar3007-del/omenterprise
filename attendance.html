@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mark Attendance | OM Enterprise</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+<style>
+body{font-family: Arial;background:#f4f6f8;padding:30px;}
+.container{max-width:400px;margin:auto;background:#fff;padding:25px;border-radius:10px;box-shadow:0 5px 15px rgba(0,0,0,0.2);}
+h2{text-align:center;color:#1e88e5;margin-bottom:20px;}
+select,button{width:100%;padding:12px;margin-bottom:12px;font-size:14px;}
+button{border:none;border-radius:6px;background:#1e88e5;color:#fff;cursor:pointer;}
+button.out{background:#e53935;}
+#reader{width:100%;margin-bottom:12px;}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h2>Mark Attendance</h2>
+
+  <select id="empSelect">
+    <option value="">Select Employee</option>
+    <option value="101|Ishwarbhai Patel|800">101 - Ishwarbhai Patel</option>
+    <option value="102|Hetvi Patel|700">102 - Hetvi Patel</option>
+    <option value="103|Suresh Patel|900">103 - Suresh Patel</option>
+    <option value="104|Amit Kumar|750">104 - Amit Kumar</option>
+    <option value="105|Priya Sharma|850">105 - Priya Sharma</option>
+  </select>
+
+  <button onclick="markIn()">Enter Time (IN)</button>
+  <button class="out" onclick="markOut()">Exit Time (OUT)</button>
+
+  <div id="reader"></div>
+  <button onclick="startQR()">Scan QR Code</button>
+</div>
+
+<script>
+// Holiday dates
+const holidays = ["25-12-2025","01-01-2026"]; // dd-mm-yyyy
+
+function today(){
+  const d=new Date();
+  return `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()}`;
+}
+function nowTime(){ return new Date().toLocaleTimeString(); }
+
+// MARK IN
+function markIn(empId=null){
+  if(holidays.includes(today())){
+    alert("Today is a holiday. Attendance not required.");
+    return;
+  }
+
+  let val = empId ? empId : document.getElementById("empSelect").value;
+  if(!val){alert("Select employee");return;}
+  const [id,name,salary] = val.split("|");
+  let data = JSON.parse(localStorage.getItem("attendance"))||[];
+
+  const exists = data.find(r=>r.id===id && r.date===today());
+  if(exists){alert("IN time already marked for today");return;}
+
+  data.push({
+    id,name,
+    date:today(),
+    inTime:nowTime(),
+    outTime:"-",
+    workHours:"-",
+    salary:0,
+    dailySalary:Number(salary)
+  });
+  localStorage.setItem("attendance",JSON.stringify(data));
+  alert(`IN time marked for ${name}`);
+}
+
+// MARK OUT
+function markOut(empId=null){
+  let val = empId ? empId : document.getElementById("empSelect").value;
+  if(!val){alert("Select employee");return;}
+  const [id] = val.split("|");
+  let data = JSON.parse(localStorage.getItem("attendance"))||[];
+  const record = data.find(r=>r.id===id && r.date===today());
+  if(!record){alert("IN time not found");return;}
+  if(record.outTime!=="-"){alert("OUT time already marked");return;}
+
+  record.outTime=nowTime();
+  record.workHours=calcHours(record.inTime,record.outTime);
+  record.salary=record.dailySalary;
+  localStorage.setItem("attendance",JSON.stringify(data));
+  alert("OUT time marked & salary added");
+}
+
+// Calculate hours
+function calcHours(inT,outT){
+  const inTime=new Date(`1970-01-01 ${inT}`);
+  const outTime=new Date(`1970-01-01 ${outT}`);
+  let diff=(outTime-inTime)/1000/60/60;
+  return diff.toFixed(2)+" hrs";
+}
+
+// Start QR Scanner
+function startQR(){
+  const html5QrCode = new Html5Qrcode("reader");
+  html5QrCode.start(
+    { facingMode: "environment" },
+    { fps: 10, qrbox: 250 },
+    (decodedText, decodedResult) => {
+      // decodedText example: 101|Ishwarbhai Patel|800
+      if(decodedText.includes("|")){
+        markIn(decodedText); // auto mark IN
+        html5QrCode.stop();
+      }
+    },
+    (errorMessage) => {}
+  ).catch(err => console.log(err));
+}
+</script>
+</body>
+</html>
